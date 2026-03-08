@@ -1,0 +1,85 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║                    GITHUB PAGES - QUICK SETUP                          ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+✅ FILES READY: Your Privacy Policy and Terms are converted and committed!
+
+📍 STEP 1: Create GitHub Repository
+────────────────────────────────────
+1. Go to: https://github.com/new
+2. Repository name: neighborhub-legal
+3. Visibility: PUBLIC (required for free GitHub Pages)
+4. Do NOT check any initialization options
+5. Click "Create repository"
+
+📍 STEP 2: Push Your Code
+────────────────────────────────────
+Copy your repository URL from GitHub, then run:
+
+    cd "/Users/mike/Desktop/Waterfall 3 V1.06"
+    
+    git remote add origin https://github.com/YOUR-USERNAME/neighborhub-legal.git
+    
+    git branch -M main
+    
+    git push -u origin main
+
+📍 STEP 3: Enable GitHub Pages
+────────────────────────────────────
+1. Go to your repo → Settings → Pages (left sidebar)
+2. Under "Source":
+   - Branch: main
+   - Folder: /docs
+3. Click "Save"
+4. Wait 1-2 minutes
+
+📍 STEP 4: Get Your URLs
+────────────────────────────────────
+Your documents will be live at:
+
+    https://YOUR-USERNAME.github.io/neighborhub-legal/privacy.html
+    https://YOUR-USERNAME.github.io/neighborhub-legal/terms.html
+
+📍 STEP 5: Add to App Store Connect
+────────────────────────────────────
+When submitting your app:
+
+Privacy Policy URL: https://YOUR-USERNAME.github.io/neighborhub-legal/privacy.html
+Support URL:        https://YOUR-USERNAME.github.io/neighborhub-legal/
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                           IMPORTANT                                    ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+Replace YOUR-USERNAME with your actual GitHub username!
+
+Example URLs if your username is "john":
+  → https://john.github.io/neighborhub-legal/privacy.html
+  → https://john.github.io/neighborhub-legal/terms.html
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                      UPDATING CONTENT                                  ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+To update your legal documents later:
+
+1. Edit PRIVACY_POLICY.md or TERMS_OF_SERVICE.md
+2. Run: python3 convert_to_html.py
+3. Commit: git add docs/ && git commit -m "Update legal docs"
+4. Push: git push
+
+Changes go live in 1-2 minutes automatically!
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                         WHAT'S INCLUDED                                ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+✅ docs/index.html   - Beautiful landing page
+✅ docs/privacy.html - Privacy Policy (GDPR/CCPA compliant)
+✅ docs/terms.html   - Terms of Service (comprehensive)
+✅ Mobile responsive design
+✅ Professional styling
+✅ Easy navigation
+✅ Ready for App Store submission
+
+Need help? Check GITHUB_PAGES_SETUP.md for detailed instructions.

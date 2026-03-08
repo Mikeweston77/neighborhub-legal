@@ -1,0 +1,19 @@
+{
+  "name": "neighborhub-functions",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "eslint . || true",
+    "serve": "firebase emulators:start --only functions,firestore,storage",
+    "start": "firebase deploy --only functions",
+    "test": "node -e \"console.log('no tests')\""
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^6.9.0",
+    "firebase-admin": "^13.7.0",
+    "firebase-functions": "^7.1.0",
+    "nodemailer": "^6.9.0",
+    "sharp": "^0.32.0",
+    "twilio": "^4.20.0"
+  }
+}

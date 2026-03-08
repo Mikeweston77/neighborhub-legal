@@ -1,0 +1,4 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project NeighborHub.xcodeproj -scheme NeighborHub -configuration Debug -destination "platform=iOS Simulator,name=iPhone 16 Pro" clean build
+
+Resolve Package Graph

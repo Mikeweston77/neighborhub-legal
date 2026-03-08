@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24233.13" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ChatMessageEntity" representedClassName="ChatMessageEntity" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="imageData" optional="YES" attributeType="Binary"/>
+        <attribute name="text" optional="YES" attributeType="String"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="videoURL" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Comment" representedClassName="Comment" syncable="YES">
+        <attribute name="content" optional="YES" attributeType="String"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isAnonymous" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="likes" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="parentCommentId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="updatedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="author" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="comments" inverseEntity="User"/>
+        <relationship name="post" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Post" inverseName="comments" inverseEntity="Post"/>
+    </entity>
+    <entity name="CommunityIssue" representedClassName="CommunityIssue" syncable="YES">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="cityTicketNumber" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="issueDescription" optional="YES" attributeType="String"/>
+        <attribute name="location" optional="YES" attributeType="String"/>
+        <attribute name="priority" optional="YES" attributeType="String"/>
+        <attribute name="reportedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="resolvedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="updateHistory" optional="YES" attributeType="String"/>
+        <attribute name="votes" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="assignedTo" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="assignedIssues" inverseEntity="User"/>
+        <relationship name="reporter" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="reportedIssues" inverseEntity="User"/>
+        <relationship name="supporters" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="supportedIssues" inverseEntity="User"/>
+    </entity>
+    <entity name="EmergencyContact" representedClassName="EmergencyContact" syncable="YES">
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="phoneNumber" optional="YES" attributeType="String"/>
+        <attribute name="priority" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="relationship" optional="YES" attributeType="String"/>
+        <relationship name="user" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="emergencyContacts" inverseEntity="User"/>
+    </entity>
+    <entity name="Event" representedClassName="Event" syncable="YES">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="cost" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="currentAttendees" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="endDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="eventDescription" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="isPublic" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="location" optional="YES" attributeType="String"/>
+        <attribute name="maxAttendees" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="requirements" optional="YES" attributeType="String"/>
+        <attribute name="requiresRSVP" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="startDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="attendees" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="eventAttendances" inverseEntity="User"/>
+        <relationship name="organizer" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="events" inverseEntity="User"/>
+    </entity>
+    <entity name="MarketplaceListing" representedClassName="MarketplaceListing" syncable="YES">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="condition" optional="YES" attributeType="String"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="deliveryAvailable" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="itemDescription" optional="YES" attributeType="String"/>
+        <attribute name="pickupLocation" optional="YES" attributeType="String"/>
+        <attribute name="price" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="sustainabilityScore" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="tags" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="type" optional="YES" attributeType="String"/>
+        <attribute name="updatedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="interestedBuyers" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="interestedListings" inverseEntity="User"/>
+        <relationship name="seller" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="listings" inverseEntity="User"/>
+    </entity>
+    <entity name="PatrolSchedule" representedClassName="PatrolSchedule" syncable="YES">
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="currentVolunteers" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="endDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="maxVolunteers" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="requiredSkills" optional="YES" attributeType="String"/>
+        <attribute name="route" optional="YES" attributeType="String"/>
+        <attribute name="scheduleName" optional="YES" attributeType="String"/>
+        <attribute name="startDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="coordinator" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="patrolSchedules" inverseEntity="User"/>
+        <relationship name="volunteers" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="volunteerSchedules" inverseEntity="User"/>
+    </entity>
+    <entity name="Petition" representedClassName="Petition" syncable="YES">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="currentSignatures" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="deadline" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="petitionDescription" optional="YES" attributeType="String"/>
+        <attribute name="targetEntity" optional="YES" attributeType="String"/>
+        <attribute name="targetSignatures" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="updates" optional="YES" attributeType="String"/>
+        <relationship name="creator" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="createdPetitions" inverseEntity="User"/>
+        <relationship name="signers" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="signedPetitions" inverseEntity="User"/>
+    </entity>
+    <entity name="Post" representedClassName="Post" syncable="YES">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="content" optional="YES" attributeType="String"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="expirationDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="isAnonymous" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="likes" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="location" optional="YES" attributeType="String"/>
+        <attribute name="priority" optional="YES" attributeType="String"/>
+        <attribute name="tags" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="updatedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="author" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="posts" inverseEntity="User"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Comment" inverseName="post" inverseEntity="Comment"/>
+    </entity>
+    <entity name="ResourceReservation" representedClassName="ResourceReservation" syncable="YES">
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="endDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="notes" optional="YES" attributeType="String"/>
+        <attribute name="startDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <relationship name="borrower" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="resourceReservations" inverseEntity="User"/>
+        <relationship name="resource" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SharedResource" inverseName="reservations" inverseEntity="SharedResource"/>
+    </entity>
+    <entity name="SecurityIncident" representedClassName="SecurityIncident" syncable="YES">
+        <attribute name="evidenceFiles" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="incidentDescription" optional="YES" attributeType="String"/>
+        <attribute name="involvedParties" optional="YES" attributeType="String"/>
+        <attribute name="isAnonymous" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="location" optional="YES" attributeType="String"/>
+        <attribute name="reportedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="resolvedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="severity" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <relationship name="assignedOfficers" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="User" inverseName="assignedIncidents" inverseEntity="User"/>
+        <relationship name="reporter" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="reportedIncidents" inverseEntity="User"/>
+    </entity>
+    <entity name="SharedResource" representedClassName="SharedResource" syncable="YES">
+        <attribute name="category" optional="YES" attributeType="String"/>
+        <attribute name="condition" optional="YES" attributeType="String"/>
+        <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="depositRequired" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="images" optional="YES" attributeType="String"/>
+        <attribute name="isAvailable" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="maintenanceNotes" optional="YES" attributeType="String"/>
+        <attribute name="maxBorrowDays" attributeType="Integer 32" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="resourceDescription" optional="YES" attributeType="String"/>
+        <attribute name="usageInstructions" optional="YES" attributeType="String"/>
+        <attribute name="value" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="currentBorrower" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="borrowedResources" inverseEntity="User"/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="User" inverseName="ownedResources" inverseEntity="User"/>
+        <relationship name="reservations" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ResourceReservation" inverseName="resource" inverseEntity="ResourceReservation"/>
+    </entity>
+    <entity name="User" representedClassName="User" syncable="YES">
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="emergencyContact" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="interests" optional="YES" attributeType="String"/>
+        <attribute name="isVerified" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="joinedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="lastActive" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="privacySettings" optional="YES" attributeType="String"/>
+        <attribute name="profileImageURL" optional="YES" attributeType="String"/>
+        <attribute name="reputationScore" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="skillsOffered" optional="YES" attributeType="String"/>
+        <relationship name="assignedIncidents" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="SecurityIncident" inverseName="assignedOfficers" inverseEntity="SecurityIncident"/>
+        <relationship name="assignedIssues" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CommunityIssue" inverseName="assignedTo" inverseEntity="CommunityIssue"/>
+        <relationship name="borrowedResources" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="SharedResource" inverseName="currentBorrower" inverseEntity="SharedResource"/>
+        <relationship name="comments" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="author" inverseEntity="Comment"/>
+        <relationship name="createdPetitions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Petition" inverseName="creator" inverseEntity="Petition"/>
+        <relationship name="emergencyContacts" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="EmergencyContact" inverseName="user" inverseEntity="EmergencyContact"/>
+        <relationship name="eventAttendances" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Event" inverseName="attendees" inverseEntity="Event"/>
+        <relationship name="events" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Event" inverseName="organizer" inverseEntity="Event"/>
+        <relationship name="interestedListings" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="MarketplaceListing" inverseName="interestedBuyers" inverseEntity="MarketplaceListing"/>
+        <relationship name="listings" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="MarketplaceListing" inverseName="seller" inverseEntity="MarketplaceListing"/>
+        <relationship name="ownedResources" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="SharedResource" inverseName="owner" inverseEntity="SharedResource"/>
+        <relationship name="patrolSchedules" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PatrolSchedule" inverseName="coordinator" inverseEntity="PatrolSchedule"/>
+        <relationship name="posts" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Post" inverseName="author" inverseEntity="Post"/>
+        <relationship name="reportedIncidents" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="SecurityIncident" inverseName="reporter" inverseEntity="SecurityIncident"/>
+        <relationship name="reportedIssues" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CommunityIssue" inverseName="reporter" inverseEntity="CommunityIssue"/>
+        <relationship name="resourceReservations" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ResourceReservation" inverseName="borrower" inverseEntity="ResourceReservation"/>
+        <relationship name="signedPetitions" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Petition" inverseName="signers" inverseEntity="Petition"/>
+        <relationship name="supportedIssues" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="CommunityIssue" inverseName="supporters" inverseEntity="CommunityIssue"/>
+        <relationship name="volunteerSchedules" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="PatrolSchedule" inverseName="volunteers" inverseEntity="PatrolSchedule"/>
+    </entity>
+</model>

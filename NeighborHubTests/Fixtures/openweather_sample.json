@@ -1,0 +1,7 @@
+{
+  "weather": [
+    { "description": "clear sky" }
+  ],
+  "main": { "temp": 21.5 },
+  "name": "Testville"
+}

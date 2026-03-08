@@ -1,0 +1,214 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // -----------------------------------------------------------------
+    // QUICK-TEST: Temporary public-read option (uncomment to enable)
+    // Useful for debugging quickly when testing across multiple users.
+    // DO NOT leave this enabled in production; it allows anyone on the
+    // internet to read files in your bucket.
+    // -----------------------------------------------------------------
+    // match /{allPaths=**} {
+    //   allow read: if true;
+    // }
+
+    
+    // =================================================================
+    // COMMUNITY CHAT ATTACHMENTS (Videos, Images, Files, Audio)
+    // =================================================================
+    // - Any authenticated user can read (download) chat attachments so that
+    //   all participants can view videos/images shared in chat.
+    // - Only the uploader (owner) may create/update/delete files under
+    //   their own uploads folder.
+    // - Example path used by the app: uploads/{uid}/communityMessages/{messageId}/files/{filename}
+    // - Size limit: 200 MB per file for videos/large media
+    match /uploads/{userId}/communityMessages/{messageId}/{allPaths=**} {
+      // allow downloads for any authenticated user
+      allow read: if request.auth != null;
+
+      // allow owner to write/delete with size limit
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null 
+                           && request.auth.uid == userId
+                           && request.resource.size < 200 * 1024 * 1024;  // 200 MB limit
+    }
+    
+    // Processed chat files (moved by Cloud Functions)
+    match /final/{chatId}/{messageId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false;  // Only Cloud Functions can write
+    }
+    
+    match /thumbs/{chatId}/{messageId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false;  // Only Cloud Functions can write
+    }
+    
+    // Quarantine for flagged content (Cloud Functions only)
+    match /quarantine/{allPaths=**} {
+      allow read: if false;  // No one can read quarantined files
+      allow write: if false;  // Only Cloud Functions can write (using service account)
+    }
+    
+    // =================================================================
+    // GENERAL USER UPLOADS
+    // =================================================================
+    // Any authenticated user can view uploads from other users
+    // Only the owner can upload to their own folder
+    match /uploads/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // =================================================================
+    // EVENTS
+    // =================================================================
+    // All authenticated users can view event images and files
+    // Users can upload to their own events folder (processed by Cloud Functions)
+    // Size limit: 20 MB per file
+    match /uploads/{userId}/events/{eventId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 20 * 1024 * 1024;  // 20 MB limit
+    }
+    
+    // Processed event files (if Cloud Functions move them)
+    match /events/{eventId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // =================================================================
+    // INCIDENT REPORTS (Emergency/Safety)
+    // =================================================================
+    // All authenticated users can view and upload incident images
+    // Incidents uploaded to user-specific folder first
+    // Size limit: 20 MB per file
+    match /uploads/{userId}/incidents/{incidentId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 20 * 1024 * 1024;  // 20 MB limit
+    }
+    
+    // Processed/final incident files
+    match /incidents/{incidentId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // =================================================================
+    // ACTIVE ALERTS (Community Notifications)
+    // =================================================================
+    // All authenticated users can view and upload alert images
+    match /activeAlerts/{alertId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // =================================================================
+    // MARKETPLACE ITEMS
+    // =================================================================
+    // Anyone can view marketplace images (public)
+    // Only authenticated users can upload
+    // Size limit: 10 MB per image
+    match /marketplace/{itemId}/{allPaths=**} {
+      allow read: if true;
+      allow delete: if request.auth != null;
+      allow create, update: if request.auth != null 
+                           && request.resource.size < 10 * 1024 * 1024;  // 10 MB limit
+    }
+    
+    // =================================================================
+    // ADVERTS (Local Business Listings)
+    // =================================================================
+    // Anyone can view advert images (public)
+    // Users upload to their own folder, Cloud Functions process to final/
+    match /uploads/{userId}/adverts/{advertId}/{allPaths=**} {
+      allow read: if true;  // Public read for transparency
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Cloud Functions move processed adverts here
+    match /final/{category}/{advertId}/{allPaths=**} {
+      allow read: if true;  // Public read
+      allow write: if false;  // Only Cloud Functions can write (using service account)
+    }
+    
+    // Thumbnail images for adverts
+    match /thumbs/{category}/{advertId}/{allPaths=**} {
+      allow read: if true;  // Public read
+      allow write: if false;  // Only Cloud Functions can write
+    }
+    
+    // Legacy advert path (if any still exist)
+    match /adverts/{advertId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // =================================================================
+    // USER PROFILE PICTURES
+    // =================================================================
+    // All authenticated users can view profile pictures
+    // Only the user can update their own profile picture
+    // Size limit: 5 MB per image
+    match /users/{userId}/profile/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null 
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024;  // 5 MB limit
+    }
+    
+    // Profile pictures using email-based path (for onboarding)
+    // Path: profiles/{emailWithUnderscores}/avatar.jpg
+    match /profiles/{userIdentifier}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null;
+      allow create, update: if request.auth != null
+                   && request.resource.size < 5 * 1024 * 1024;  // 5 MB limit
+    }
+    
+    // =================================================================
+    // NEWSLETTERS
+    // =================================================================
+    // Hybrid storage: Small files (<1MB) in Firestore, large files in Storage
+    // All authenticated users can view newsletter attachments
+    // Only authenticated users can upload newsletter PDFs
+    // Path structure: newsletters/{newsletterId}/{filename}
+    // Size limit: 20 MB per file
+    match /newsletters/{newsletterId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null;  // Any authenticated user can delete (admin check in app)
+      allow create, update: if request.auth != null
+                   && request.resource.size < 20 * 1024 * 1024;  // 20 MB limit
+    }
+    
+    // =================================================================
+    // LOCAL LISTINGS (IMAGES & PDF ATTACHMENTS)
+    // =================================================================
+    // Hybrid storage: Small files (<1MB) in Firestore, large files in Storage
+    // All users can view local listing images and PDFs (public community content)
+    // Only authenticated users can upload images/PDFs for their listings
+    // Path structure: localListings/{listingId}/{filename}
+    // Size limit: 100 MB per file
+    match /localListings/{listingId}/{allPaths=**} {
+      allow read: if true;  // Public read access for community listings
+      allow delete: if request.auth != null;  // Only authenticated users can delete
+      allow create, update: if request.auth != null
+                   && request.resource.size < 100 * 1024 * 1024;  // 100 MB limit
+    }
+    
+    // =================================================================
+    // DEFAULT DENY ALL
+    // =================================================================
+    // Any path not matched above is denied
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

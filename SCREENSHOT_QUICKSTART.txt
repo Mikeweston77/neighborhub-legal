@@ -1,0 +1,162 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║              APP STORE SCREENSHOTS - QUICK START                       ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+📱 REQUIREMENT: At least 5 screenshots for 6.7" display (iPhone 15 Pro Max)
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                        STEP-BY-STEP GUIDE                              ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: Open Xcode Project
+────────────────────────────────────
+    open NeighborHub.xcodeproj
+
+STEP 2: Select Target Device in Xcode
+────────────────────────────────────
+    Click device menu (top left) → Select:
+    • iPhone 16 Pro (6.3" - acceptable)
+    • iPhone 16 Pro Max (6.9" - acceptable)  
+    • OR any large iPhone simulator available
+
+STEP 3: Build and Run (Cmd+R)
+────────────────────────────────────
+    Wait for app to launch in Simulator
+
+STEP 4: Prepare Each Screen
+────────────────────────────────────
+    Navigate to these screens and capture:
+
+    📱 Screen 1: HOME (Main Dashboard)
+       • Shows emergency features
+       • Weather widget visible
+       • Community updates preview
+       
+    📱 Screen 2: REPORTIT (Safety/Incidents)
+       • Incident cards with content
+       • Shows community safety features
+       
+    📱 Screen 3: COMMUNITY CHAT
+       • Active conversations
+       • Messages visible
+       • Shows neighbor engagement
+       
+    📱 Screen 4: EVENTS
+       • Upcoming events listed
+       • Calendar view
+       • RSVP functionality visible
+       
+    📱 Screen 5: MARKETPLACE
+       • Item listings with photos
+       • Shows local commerce
+       
+    📱 Screen 6: EMERGENCY FEATURES (BONUS - unique!)
+       • Emergency contacts
+       • Quick dial buttons
+       • Your app's differentiator!
+
+STEP 5: Capture Each Screenshot
+────────────────────────────────────
+    In Simulator:
+    1. Navigate to screen
+    2. Press Cmd+S to save screenshot
+    3. Screenshot saves to Desktop automatically
+    4. Repeat for each screen
+
+STEP 6: Organize Screenshots
+────────────────────────────────────
+    Run the organizer script:
+    
+    cd "/Users/mike/Desktop/Waterfall 3 V1.06"
+    ./organize_screenshots.sh
+
+    Or manually:
+    
+    mkdir -p ~/Desktop/NeighborHub-Screenshots
+    mv ~/Desktop/Simulator\ Screenshot*.png ~/Desktop/NeighborHub-Screenshots/
+
+STEP 7: Rename Files Descriptively
+────────────────────────────────────
+    In Finder, rename to:
+    • 01-home-dashboard.png
+    • 02-safety-reportit.png
+    • 03-community-chat.png
+    • 04-events-calendar.png
+    • 05-marketplace.png
+    • 06-emergency-features.png (optional)
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                         SCREENSHOT TIPS                                ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+✅ DO:
+   • Use Light Mode (better visibility)
+   • Show real content (messages, events, listings)
+   • Highlight your unique features (emergency system!)
+   • Hide status bar: Simulator → Features → Hide Status Bar
+   • Make sure screens look populated and active
+
+❌ DON'T:
+   • Show personal information
+   • Use empty screens
+   • Show error messages
+   • Use low quality images
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                    TROUBLESHOOTING                                     ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+❓ No large iPhone simulator available?
+   → In Xcode: Window → Devices and Simulators → + (Add new simulator)
+   → Choose iPhone 16 Pro or iPhone 15 Pro Max
+
+❓ Screenshots not saving to Desktop?
+   → Check: Simulator → Preferences → Screenshot → Save to Desktop
+
+❓ App looks empty/no content?
+   → Create sample data first:
+      • Register account
+      • Post some messages
+      • Create an event
+      • Add marketplace listing
+
+❓ Wrong resolution?
+   → Must use iPhone 16 Pro (or newer) OR iPhone 15 Pro Max
+   → Check simulator name when capturing
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                    REQUIRED SPECIFICATIONS                             ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+Minimum Requirements:
+   • 5 screenshots minimum (10 maximum)
+   • Device size: 6.3" or larger (iPhone 15/16 Pro series)
+   • Format: PNG or JPEG
+   • Max file size: 500KB per image
+   • No alpha channels (transparency)
+
+Recommended Dimensions (will be auto-detected):
+   • iPhone 16 Pro Max: 1320 x 2868 px
+   • iPhone 15 Pro Max: 1290 x 2796 px  
+   • iPhone 16 Pro: 1206 x 2622 px
+
+╔════════════════════════════════════════════════════════════════════════╗
+║                         NEXT STEPS                                     ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+After capturing screenshots:
+
+1. Review in Finder for quality
+2. Ensure file names are descriptive
+3. Upload to App Store Connect:
+   • Go to https://appstoreconnect.apple.com
+   • Select app → App Store → Screenshots
+   • Drag and drop images
+   • Arrange in best order
+
+═══════════════════════════════════════════════════════════════════════
+
+📖 For detailed guide, see: SCREENSHOT_GUIDE.md
+🤖 For automation, run: ./organize_screenshots.sh
+
+Ready to start? Open Xcode and press Cmd+R!

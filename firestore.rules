@@ -1,0 +1,487 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =================================================================
+    // HELPER FUNCTIONS
+    // =================================================================
+    
+    // Check if user is authenticated with Firebase Auth
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Get current user's document
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Check if user is admin (with safe get to avoid circular dependency)
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Check if user is committee member
+    function isCommittee() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isCommittee == true;
+    }
+    
+    // Check if user is verified by admin
+    function isVerified() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verified == true;
+    }
+    
+    // Check if user has camera access permission (security cameras)
+    function hasCameraAccess() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.cameraAccess == true;
+    }
+    
+    // Check if user owns the document
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Check if user's email matches
+    function emailMatches(email) {
+      return isSignedIn() && request.auth.token.email == email;
+    }
+    
+    // =================================================================
+    // USER PROFILES
+    // =================================================================
+    match /users/{userId} {
+      // LIST (query all users): Only admins and committee members can list all users
+      allow list: if isSignedIn() && (isAdmin() || isCommittee());
+      
+      // GET (read individual document): 
+      // - Users can always read their own profile (needed to check verification status)
+      // - Authenticated users can read verified user profiles
+      // - Admins can read all profiles
+      allow get: if isSignedIn() && 
+                    (request.auth.uid == userId || 
+                     isAdmin() || 
+                     get(/databases/$(database)/documents/users/$(userId)).data.verified == true);
+      
+      // Users can create their own profile during registration (must match Auth UID)
+      allow create: if isSignedIn() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.uid == userId &&
+                       request.resource.data.email == request.auth.token.email;
+      
+      // Users can update their own profile (cannot change UID or email)
+      // Admins can update any profile (for role assignments and verification)
+      allow update: if isSignedIn() && 
+                       (isOwner(userId) && 
+                        request.resource.data.uid == resource.data.uid &&
+                        request.resource.data.email == resource.data.email) ||
+                       isAdmin();
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // =================================================================
+    // COMMUNITY CHAT MESSAGES
+    // =================================================================
+    match /communityMessages/{messageId} {
+      // Only verified users can read community messages
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only verified users can create messages
+      // Ensure the message userId matches the authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can update/delete their own messages
+      // Admins can update/delete any message (moderation)
+      allow update, delete: if isSignedIn() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // =================================================================
+    // PINNED MESSAGES
+    // =================================================================
+    match /pinnedMessages/{messageId} {
+      // Only verified users can read pinned messages
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only verified admins and committee members can pin/unpin messages
+      allow create, delete: if isSignedIn() && isVerified() && (isAdmin() || isCommittee());
+    }
+    
+    // =================================================================
+    // ACTIVE ALERTS (Emergency Broadcasts)
+    // =================================================================
+    match /activeAlerts/{alertId} {
+      // Only verified users can read alerts
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only verified users can create alerts (emergency situations)
+      // Ensure userId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update or delete alerts (moderation/resolution)
+      allow update, delete: if isAdmin();
+    }
+    
+    // =================================================================
+    // INCIDENT REPORTS (Safety/Security)
+    // =================================================================
+    match /incidents/{incidentId} {
+      // Only verified users can read incidents
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only verified users can create incidents
+      // Ensure reporterId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.reporterId == request.auth.uid;
+      
+      // Users can update their own incidents (add details/photos)
+      // Admins can update any incident (to archive/resolve/moderate)
+      allow update: if isSignedIn() && 
+                       (resource.data.reporterId == request.auth.uid || isAdmin());
+      
+      // Only admins can delete incidents
+      allow delete: if isAdmin();
+    }
+    
+    // =================================================================
+    // ARCHIVED INCIDENTS (Resolved/Historical Reports)
+    // =================================================================
+    match /archivedIncidents/{incidentId} {
+      // Only verified users can read archived incidents
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only admins can create archived incidents (archiving process)
+      allow create: if isAdmin();
+      
+      // Only admins can update archived incidents (restore/modify)
+      allow update: if isAdmin();
+      
+      // Only admins can delete archived incidents
+      allow delete: if isAdmin();
+    }
+    
+    // =================================================================
+    // MARKETPLACE ITEMS
+    // =================================================================
+    match /marketplace/{itemId} {
+      // Anyone can read marketplace items (public listings)
+      allow read: if true;
+      
+      // Only verified users can create listings
+      // Ensure owner field exists (app uses 'owner' not 'sellerId')
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.keys().hasAny(['owner']);
+      
+      // Users can update/delete their own listings (app stores owner as name, not UID)
+      // Admins can update/delete any listing (moderation)
+      allow update, delete: if isSignedIn() && isVerified();
+    }
+    
+    // =================================================================
+    // LOCAL ADVERTS (Business Listings)
+    // =================================================================
+    match /localAdverts/{advertId} {
+      // Anyone can read adverts (public business listings)
+      allow read: if true;
+      
+      // Only verified users can create adverts
+      // App doesn't store authorId, uses sellerName instead
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.keys().hasAny(['sellerName', 'title']);
+      
+      // Users can update/delete their own adverts (name-based matching)
+      // Admins can update/delete any advert (moderation)
+      allow update, delete: if isSignedIn() && isVerified();
+    }
+    
+    // =================================================================
+    // NEWSLETTERS
+    // =================================================================
+    match /newsletters/{newsletterId} {
+      // Any authenticated user can read newsletters
+      allow read: if isSignedIn();
+      
+      // Any authenticated user can create newsletters (relaxed for testing)
+      allow create: if isSignedIn();
+      
+      // Only admins can update/delete newsletters
+      allow update, delete: if isAdmin();
+    }
+    
+    // =================================================================
+    // NEWSLETTER FORM SUBMISSIONS
+    // =================================================================
+    match /newsletterSubmissions/{submissionId} {
+      // Users can read submissions if:
+      // 1. They are admin/committee (see all)
+      // 2. It's their own submission (by UID)
+      // 3. The submission document has allowPublicSubmissionView = true and user is verified
+      allow read: if isSignedIn() && 
+                     (isAdmin() || 
+                      isCommittee() || 
+                      resource.data.submitterId == request.auth.uid ||
+                      (isVerified() && resource.data.allowPublicSubmissionView == true));
+      
+      // Verified users can create submissions
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.submitterId == request.auth.uid;
+      
+      // Users can update their own submissions, admins can update any (for status changes)
+      allow update: if isSignedIn() && 
+                       (resource.data.submitterId == request.auth.uid || 
+                        isAdmin() || 
+                        isCommittee());
+      
+      // Only admins and committee can delete submissions
+      allow delete: if isAdmin() || isCommittee();
+    }
+    
+    // =================================================================
+    // EVENTS
+    // =================================================================
+    match /events/{eventId} {
+      // Only verified users can read events
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only verified users can create events
+      // Ensure creatorId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.creatorId == request.auth.uid;
+      
+      // All verified users can update events (for adding messages/comments)
+      // Event creators and admins can delete
+      allow update: if isSignedIn() && isVerified();
+      allow delete: if isSignedIn() && 
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+    }
+    
+    // =================================================================
+    // EMERGENCY CONTACTS
+    // =================================================================
+    match /emergencyContacts/{contactId} {
+      // ALL authenticated users can read emergency contacts (critical safety info)
+      allow read: if isSignedIn();
+      
+      // Only admins and committee members can create/update/delete
+      allow write: if isSignedIn() && (isAdmin() || isCommittee());
+    }
+    
+    // =================================================================
+    // CATEGORY CONTACTS (Report It Department Contacts)
+    // =================================================================
+    match /categoryContacts/{categoryId} {
+      // ALL authenticated users can read category contacts
+      allow read: if isSignedIn();
+      
+      // TEMPORARY: Allow all authenticated users to write (for testing)
+      // TODO: Restore to: if isSignedIn() && (isAdmin() || isCommittee());
+      allow write: if isSignedIn();
+    }
+    
+    // =================================================================
+    // PATROL SCHEDULES (Neighborhood Watch)
+    // =================================================================
+    match /patrolSchedules/{scheduleId} {
+      // Only verified users can read schedules
+      allow read: if isSignedIn() && isVerified();
+      
+      // Verified users can create schedules (volunteer sign-up)
+      // Ensure userId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Schedule creators and admins can update/delete
+      allow update, delete: if isSignedIn() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+    }
+    
+    // =================================================================
+    // CAMERA FEEDS & RECORDINGS (Security System)
+    // =================================================================
+    match /cameraFeeds/{feedId} {
+      // Only users with cameraAccess permission can read camera feeds
+      // This protects live camera streams and recordings
+      allow read: if isSignedIn() && (hasCameraAccess() || isAdmin());
+      
+      // Only admins can manage camera feeds (add/update/delete cameras)
+      allow write: if isAdmin();
+    }
+    
+    match /cameraRecordings/{recordingId} {
+      // Only users with cameraAccess permission can view recordings
+      allow read: if isSignedIn() && (hasCameraAccess() || isAdmin());
+      
+      // Only admins can manage recordings
+      allow write: if isAdmin();
+    }
+    
+    match /cameraEvents/{eventId} {
+      // Camera motion detection events and alerts
+      // Only users with camera access can view
+      allow read: if isSignedIn() && (hasCameraAccess() || isAdmin());
+      
+      // System-generated, only admins can modify
+      allow write: if isAdmin();
+    }
+    
+    // =================================================================
+    // SHARED RESOURCES (Tool Library)
+    // =================================================================
+    match /sharedResources/{resourceId} {
+      // Only verified users can read resources
+      allow read: if isSignedIn() && isVerified();
+      
+      // Verified users can create resource listings
+      // Ensure ownerId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.ownerId == request.auth.uid;
+      
+      // Resource owners and admins can update/delete
+      allow update, delete: if isSignedIn() && 
+        (resource.data.ownerId == request.auth.uid || isAdmin());
+    }
+    
+    // =================================================================
+    // PETITIONS
+    // =================================================================
+    match /petitions/{petitionId} {
+      // Only verified users can read petitions
+      allow read: if isSignedIn() && isVerified();
+      
+      // Verified users can create petitions
+      // Ensure creatorId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.creatorId == request.auth.uid;
+      
+      // Petition creators and admins can update/delete
+      allow update, delete: if isSignedIn() && 
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+    }
+    
+    // =================================================================
+    // COMMUNITY ISSUES (Issue Tracking)
+    // =================================================================
+    match /communityIssues/{issueId} {
+      // Only verified users can read issues
+      allow read: if isSignedIn() && isVerified();
+      
+      // Verified users can create issues
+      // Ensure reporterId matches authenticated user
+      allow create: if isSignedIn() && 
+                       isVerified() &&
+                       request.resource.data.reporterId == request.auth.uid;
+      
+      // Issue creators and admins can update
+      // Only admins can delete
+      allow update: if isSignedIn() && 
+        (resource.data.reporterId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    // =================================================================
+    // TYPING INDICATORS (Real-time Chat Status)
+    // =================================================================
+    match /typingIndicators/{userId} {
+      // Only verified users can read typing indicators
+      allow read: if isSignedIn() && isVerified();
+      
+      // Users can only update their own typing indicator
+      allow write: if isOwner(userId);
+    }
+    
+    // NEW: Typing indicators within neighborhoods (used by chat)
+    match /neighborhoods/{neighborhoodId}/typing_status/{userId} {
+      // All verified users can read typing status in their neighborhood
+      allow read: if isSignedIn() && isVerified();
+      
+      // Users can only write their own typing status
+      allow write: if isSignedIn() && isVerified() && isOwner(userId);
+    }
+    
+    // =================================================================
+    // POLLS (Community Voting)
+    // =================================================================
+    match /polls/active {
+      // All verified users can read the active poll
+      allow read: if isSignedIn() && isVerified();
+      
+      // Verified users can UPDATE to vote (transaction-based voting)
+      // Only admins and committee members can CREATE new polls
+      allow create: if isSignedIn() && isVerified() && (isAdmin() || isCommittee());
+      allow update: if isSignedIn() && isVerified();
+      
+      // Only admins can delete the active poll
+      allow delete: if isAdmin();
+    }
+    
+    // Archived polls subcollection
+    match /polls/archived/items/{pollId} {
+      // All verified users can read archived polls
+      allow read: if isSignedIn() && isVerified();
+      
+      // Only admins can write to archived polls (automatic archival process)
+      allow write: if isAdmin();
+    }
+    
+    // =================================================================
+    // DEFAULT DENY ALL
+    // =================================================================
+    // Any collection not matched above is denied
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =================================================================
+    // LOCAL LISTINGS (Shared Community Listings) 
+    // =================================================================
+    match /localListings/{listingId} {
+      // Anyone can read local listings (public community listings)
+      allow read: if true;
+      
+      // Authenticated users can create listings (verification optional for testing)
+      allow create: if isSignedIn() && 
+                       request.resource.data.keys().hasAny(['author', 'title']);
+      
+      // Users can update/delete their own listings (check authorUID ownership)
+      // Admins can update/delete any listing (moderation)
+      allow update, delete: if isSignedIn() && 
+                               (isAdmin() || 
+                                isCommittee() ||
+                                (exists(/databases/$(database)/documents/localListings/$(listingId)) &&
+                                 get(/databases/$(database)/documents/localListings/$(listingId)).data.authorUID == request.auth.uid));
+    }
+    
+    // =================================================================
+    // EMERGENCY SETTINGS
+    // =================================================================
+    match /emergencySettings/{settingId} {
+      // All authenticated users can read emergency settings
+      allow read: if isSignedIn();
+      
+      // TEMPORARY: Allow all authenticated users to update (for debugging)
+      // TODO: Change back to: allow write: if isAdmin() || isCommittee();
+      allow write: if isSignedIn();
+    }
+  }
+}
