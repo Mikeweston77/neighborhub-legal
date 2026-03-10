@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waterfall 3 Estate — Neighbourhood Community App</title>
-    <meta name="description" content="Waterfall 3 Estate is a residential community in South Africa. We use NeighborHub — our dedicated neighbourhood app — for safety, communication, and community management.">
+    <title>NeighborHub — Neighbourhood Community App</title>
+    <meta name="description" content="NeighborHub is a neighbourhood community app for South African residential estates. Safety alerts, community chat, events, marketplace, and HOA management in one app.">
 
-    <!-- Open Graph / Facebook / WhatsApp preview -->
+    <!-- Open Graph / Facebook / Meta preview -->
     <meta property="og:type"        content="website">
-    <meta property="og:url"         content="https://waterfall3.co.za/">
-    <meta property="og:title"       content="Waterfall 3 Estate">
-    <meta property="og:description" content="Residential community in South Africa using NeighborHub for neighbourhood safety, events, and communication.">
+    <meta property="og:url"         content="https://mikeweston77.github.io/neighborhub-legal/">
+    <meta property="og:title"       content="NeighborHub — Neighbourhood Community App">
+    <meta property="og:description" content="NeighborHub brings residential communities together through safety alerts, community chat, events, and HOA management. Built for South African estates.">
+    <meta property="og:site_name"   content="NeighborHub">
 
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --blue:   #1a5fa8;
-            --teal:   #0d9488;
-            --light:  #f0f7ff;
-            --text:   #1e293b;
-            --muted:  #64748b;
-            --white:  #ffffff;
+            --blue:    #1a5fa8;
+            --teal:    #0d9488;
+            --indigo:  #4f46e5;
+            --light:   #f0f7ff;
+            --text:    #1e293b;
+            --muted:   #64748b;
+            --white:   #ffffff;
+            --border:  #e2e8f0;
         }
 
         body {
@@ -31,35 +34,77 @@
             line-height: 1.6;
         }
 
+        /* ── NAV ── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-brand {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-brand .app-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--blue), var(--teal));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+        .nav-links { display: flex; gap: 24px; list-style: none; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--blue); }
+        @media (max-width: 520px) { .nav-links { display: none; } }
+
         /* ── HERO ── */
         .hero {
             background: linear-gradient(135deg, var(--blue) 0%, var(--teal) 100%);
             color: var(--white);
-            padding: 72px 24px 60px;
+            padding: 80px 24px 72px;
             text-align: center;
         }
         .hero .badge {
             display: inline-block;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.18);
             border: 1px solid rgba(255,255,255,0.35);
             border-radius: 999px;
-            padding: 4px 16px;
-            font-size: 0.85rem;
-            letter-spacing: 0.05em;
+            padding: 5px 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.07em;
             text-transform: uppercase;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
         .hero h1 {
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            font-weight: 800;
-            margin-bottom: 12px;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            font-weight: 900;
+            margin-bottom: 14px;
+            letter-spacing: -0.02em;
         }
-        .hero p {
-            font-size: clamp(1rem, 2.5vw, 1.25rem);
+        .hero .tagline {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
             opacity: 0.9;
-            max-width: 560px;
-            margin: 0 auto 32px;
+            max-width: 520px;
+            margin: 0 auto 36px;
         }
+        .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
         .btn-hero {
             display: inline-block;
             background: var(--white);
@@ -71,79 +116,140 @@
             font-size: 1rem;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.22); }
+        .btn-hero-ghost {
+            display: inline-block;
+            background: rgba(255,255,255,0.12);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: var(--white);
+            font-weight: 600;
+            padding: 12px 30px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-hero-ghost:hover { background: rgba(255,255,255,0.22); }
 
-        /* ── ABOUT SECTION ── */
-        .section { padding: 64px 24px; }
+        /* ── TRUST BAR ── */
+        .trust-bar {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 24px;
+            text-align: center;
+        }
+        .trust-bar p {
+            font-size: 0.85rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 28px;
+        }
+        .trust-bar span { display: flex; align-items: center; gap: 6px; }
+
+        /* ── SECTIONS ── */
+        .section { padding: 72px 24px; }
         .section.alt { background: var(--light); }
-        .inner { max-width: 840px; margin: 0 auto; }
+        .inner { max-width: 860px; margin: 0 auto; }
         .section-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.12em;
             color: var(--teal);
             font-weight: 700;
             margin-bottom: 8px;
         }
         .section h2 {
-            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-size: clamp(1.6rem, 3vw, 2.1rem);
             font-weight: 800;
             margin-bottom: 16px;
-            color: var(--text);
+            letter-spacing: -0.01em;
         }
-        .section p { color: var(--muted); max-width: 680px; }
+        .section > .inner > p, .about-text { color: var(--muted); max-width: 680px; line-height: 1.75; }
 
         /* ── FEATURES GRID ── */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 24px;
-            margin-top: 40px;
+            gap: 22px;
+            margin-top: 44px;
         }
         .feature {
             background: var(--white);
-            border-radius: 14px;
-            padding: 28px 24px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            border-radius: 16px;
+            padding: 28px 22px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+            border: 1px solid var(--border);
+            transition: box-shadow 0.2s, transform 0.2s;
         }
-        .feature .icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
+        .feature:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
+        .feature .icon { font-size: 2rem; margin-bottom: 14px; }
+        .feature h3 { font-size: 1rem; font-weight: 700; margin-bottom: 7px; }
+        .feature p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+        /* ── ABOUT LAYOUT ── */
+        .about-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+            margin-top: 32px;
         }
-        .feature h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
-        .feature p  { font-size: 0.9rem; color: var(--muted); }
+        @media (max-width: 640px) { .about-body { grid-template-columns: 1fr; } }
+
+        .info-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+        .info-list li {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 0.95rem;
+            color: var(--muted);
+        }
+        .info-list li strong { color: var(--text); display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+        .info-list .il-icon {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: var(--light);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
 
         /* ── CONTACT ── */
         .contact-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 24px;
-            margin-top: 32px;
+            margin-top: 36px;
         }
-        .contact-item { display: flex; gap: 14px; align-items: flex-start; }
-        .contact-item .ci-icon {
+        .contact-card {
+            background: var(--white);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 24px 20px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .contact-card .ci-icon {
             width: 44px; height: 44px; border-radius: 50%;
             background: var(--light);
             display: flex; align-items: center; justify-content: center;
             font-size: 1.2rem; flex-shrink: 0;
         }
-        .contact-item h4 { font-size: 0.85rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .contact-item p, .contact-item a { font-size: 0.95rem; color: var(--text); text-decoration: none; }
-        .contact-item a:hover { text-decoration: underline; }
+        .contact-card h4 { font-size: 0.78rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+        .contact-card p, .contact-card a { font-size: 0.95rem; color: var(--text); text-decoration: none; word-break: break-all; }
+        .contact-card a:hover { color: var(--blue); text-decoration: underline; }
 
-        /* ── LEGAL LINKS ── */
-        .legal-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-top: 32px;
-        }
+        /* ── LEGAL ── */
+        .legal-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
         .btn-outline {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             border: 2px solid var(--blue);
             color: var(--blue);
             border-radius: 999px;
-            padding: 10px 28px;
+            padding: 11px 28px;
             font-weight: 600;
             text-decoration: none;
             font-size: 0.95rem;
@@ -154,103 +260,200 @@
         /* ── FOOTER ── */
         footer {
             background: var(--text);
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.55);
             text-align: center;
-            padding: 28px 24px;
-            font-size: 0.85rem;
+            padding: 32px 24px;
+            font-size: 0.82rem;
         }
-        footer a { color: rgba(255,255,255,0.8); text-decoration: none; }
-        footer a:hover { text-decoration: underline; }
+        footer .footer-inner { max-width: 860px; margin: 0 auto; }
+        footer .footer-links { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+        footer .footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; }
+        footer .footer-links a:hover { color: #fff; }
     </style>
 </head>
 <body>
 
+<!-- ── NAV ── -->
+<nav>
+    <a href="#" class="nav-brand">
+        <span class="app-icon">🏘</span>
+        NeighborHub
+    </a>
+    <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+    </ul>
+</nav>
+
 <!-- ── HERO ── -->
 <header class="hero">
-    <div class="badge">Residential Community — South Africa</div>
-    <h1>Waterfall 3 Estate</h1>
-    <p>A connected, safe neighbourhood powered by the NeighborHub community app.</p>
-    <a href="#contact" class="btn-hero">Contact Us</a>
+    <div class="badge">Mobile App · South Africa</div>
+    <h1>NeighborHub</h1>
+    <p class="tagline">The all-in-one neighbourhood community app for South African residential estates.</p>
+    <div class="hero-actions">
+        <a href="#contact" class="btn-hero">Contact Us</a>
+        <a href="#features" class="btn-hero-ghost">See Features</a>
+    </div>
 </header>
 
+<!-- ── TRUST BAR ── -->
+<div class="trust-bar">
+    <p>
+        <span>🔒 Resident-verified access</span>
+        <span>🇿🇦 Built for South African communities</span>
+        <span>📱 iOS mobile app</span>
+        <span>🔐 Privacy-first design</span>
+    </p>
+</div>
+
 <!-- ── ABOUT ── -->
-<section class="section">
+<section class="section" id="about">
     <div class="inner">
         <div class="section-label">About</div>
-        <h2>Who We Are</h2>
-        <p>Waterfall 3 Estate is a residential community in South Africa. Our homeowners association uses the <strong>NeighborHub</strong> mobile app to keep residents connected — managing neighbourhood watch schedules, community events, emergency alerts, local listings, and subscription payments all in one place.</p>
+        <h2>What Is NeighborHub?</h2>
+        <p class="about-text">NeighborHub is a mobile application designed for South African residential estates and homeowners associations. It brings residents and HOA committees together through a single secure platform — covering neighbourhood safety, community communication, event planning, a local marketplace, and subscription management.</p>
+
+        <div class="about-body">
+            <ul class="info-list">
+                <li>
+                    <span class="il-icon">🏢</span>
+                    <div><strong>Business Name</strong>NeighborHub</div>
+                </li>
+                <li>
+                    <span class="il-icon">📱</span>
+                    <div><strong>Platform</strong>iOS mobile application</div>
+                </li>
+                <li>
+                    <span class="il-icon">📍</span>
+                    <div><strong>Country</strong>South Africa</div>
+                </li>
+                <li>
+                    <span class="il-icon">👤</span>
+                    <div><strong>Developer / Owner</strong>Mike Weston</div>
+                </li>
+                <li>
+                    <span class="il-icon">📧</span>
+                    <div><strong>Contact Email</strong><a href="mailto:mrcsweston@outlook.com" style="color:var(--blue);font-size:0.95rem;">mrcsweston@outlook.com</a></div>
+                </li>
+            </ul>
+            <ul class="info-list">
+                <li>
+                    <span class="il-icon">🔒</span>
+                    <div><strong>Data &amp; Privacy</strong>User data is stored securely via Firebase. Full details are in our Privacy Policy.</div>
+                </li>
+                <li>
+                    <span class="il-icon">🤝</span>
+                    <div><strong>User Base</strong>Verified residents and committee members of residential estates.</div>
+                </li>
+                <li>
+                    <span class="il-icon">🛡️</span>
+                    <div><strong>Verification</strong>Every resident is manually verified by their estate admin before gaining access.</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section class="section alt" id="features">
+    <div class="inner">
+        <div class="section-label">Features</div>
+        <h2>Everything Your Community Needs</h2>
+        <p>NeighborHub combines neighbourhood watch tools, social communication, and HOA administration into one app.</p>
 
         <div class="grid">
             <div class="feature">
-                <div class="icon">🏡</div>
-                <h3>Residents &amp; HOA</h3>
-                <p>Verified residents and committee members manage the estate through a dedicated mobile app.</p>
-            </div>
-            <div class="feature">
                 <div class="icon">🚨</div>
                 <h3>Emergency Alerts</h3>
-                <p>Instant WhatsApp and push-notification emergency alerts to keep our community safe 24/7.</p>
-            </div>
-            <div class="feature">
-                <div class="icon">📅</div>
-                <h3>Community Events</h3>
-                <p>Plan, RSVP, and share neighbourhood events from the app.</p>
+                <p>Instant push-notification and WhatsApp emergency alerts keep the entire community informed of safety incidents in real time.</p>
             </div>
             <div class="feature">
                 <div class="icon">💬</div>
                 <h3>Community Chat</h3>
-                <p>Hyperlocal messaging so residents can stay informed and connected.</p>
+                <p>Hyperlocal group messaging, direct messages, and announcement channels for verified residents only.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">📅</div>
+                <h3>Events &amp; RSVP</h3>
+                <p>Create neighbourhood events, track RSVPs, and share updates — all managed directly in the app.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">🛒</div>
+                <h3>Local Marketplace</h3>
+                <p>Buy, sell, and share items within the community. A trusted closed marketplace for verified neighbours.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">🏘</div>
+                <h3>HOA Management</h3>
+                <p>Committee members manage subscriptions, resident approvals, notices, polls, and financials from an admin dashboard.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">👮</div>
+                <h3>Neighbourhood Watch</h3>
+                <p>Digital patrol schedules, incident reporting, crime trend Heat maps, and a volunteer coordination system.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">🔔</div>
+                <h3>Pinned Notices</h3>
+                <p>Admins can pin important announcements so no critical information gets lost in the feed.</p>
+            </div>
+            <div class="feature">
+                <div class="icon">💳</div>
+                <h3>Subscriptions</h3>
+                <p>Track household membership subscriptions with single and household plan options, payment history, and overdue alerts.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- ── CONTACT ── -->
-<section class="section alt" id="contact">
+<section class="section" id="contact">
     <div class="inner">
         <div class="section-label">Get In Touch</div>
         <h2>Contact</h2>
-        <p>For enquiries about the Waterfall 3 Estate NeighborHub app or the homeowners association, please reach out using the details below.</p>
+        <p>For enquiries about NeighborHub — including support, privacy questions, or business matters — reach out using any of the details below.</p>
 
         <div class="contact-grid">
-            <div class="contact-item">
+            <div class="contact-card">
                 <div class="ci-icon">📧</div>
                 <div>
                     <h4>Email</h4>
-                    <a href="mailto:admin@waterfall3.co.za">admin@waterfall3.co.za</a>
+                    <a href="mailto:mrcsweston@outlook.com">mrcsweston@outlook.com</a>
                 </div>
             </div>
-            <div class="contact-item">
+            <div class="contact-card">
                 <div class="ci-icon">📱</div>
                 <div>
                     <h4>WhatsApp</h4>
-                    <a href="https://wa.me/27793867472">+27 79 386 7472</a>
+                    <a href="https://wa.me/27739540267">+27 73 954 0267</a>
                 </div>
             </div>
-            <div class="contact-item">
+            <div class="contact-card">
+                <div class="ci-icon">👤</div>
+                <div>
+                    <h4>Developer</h4>
+                    <p>Mike Weston</p>
+                </div>
+            </div>
+            <div class="contact-card">
                 <div class="ci-icon">📍</div>
                 <div>
                     <h4>Location</h4>
-                    <p>Waterfall 3 Estate, South Africa</p>
-                </div>
-            </div>
-            <div class="contact-item">
-                <div class="ci-icon">🌐</div>
-                <div>
-                    <h4>Website</h4>
-                    <a href="https://waterfall3.co.za">waterfall3.co.za</a>
+                    <p>South Africa</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- ── LEGAL DOCS ── -->
-<section class="section">
+<!-- ── LEGAL ── -->
+<section class="section alt">
     <div class="inner">
         <div class="section-label">Legal</div>
         <h2>Legal Documents</h2>
-        <p>Read our privacy policy and terms of service for the NeighborHub app used by Waterfall 3 Estate residents.</p>
+        <p>Read our privacy policy and terms of service governing the use of the NeighborHub mobile application.</p>
         <div class="legal-row">
             <a href="privacy.html" class="btn-outline">🔒 Privacy Policy</a>
             <a href="terms.html"   class="btn-outline">📋 Terms of Service</a>
@@ -260,7 +463,16 @@
 
 <!-- ── FOOTER ── -->
 <footer>
-    <p>&copy; 2026 Waterfall 3 Estate. All rights reserved. &nbsp;|&nbsp; <a href="privacy.html">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms.html">Terms of Service</a></p>
+    <div class="footer-inner">
+        <div class="footer-links">
+            <a href="#about">About</a>
+            <a href="#features">Features</a>
+            <a href="#contact">Contact</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+        </div>
+        <p>&copy; 2026 NeighborHub. All rights reserved. &nbsp;·&nbsp; Developed by Mike Weston, South Africa.</p>
+    </div>
 </footer>
 
 </body>
