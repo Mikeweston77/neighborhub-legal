@@ -108,15 +108,15 @@ struct StitchPaymentMethodSelectorSheet: View {
 
 struct SubscriptionPurchaseView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var householdViewModel = UserHouseholdViewModel()
     @StateObject private var weatherService = WeatherKitService()
     
-    @State private var showPaymentSheet: Bool = false
-    @State private var showPaymentMethodSheet: Bool = false
     @State private var paymentReference: String?
     @State private var isInitiatingPayment: Bool = false
     @State private var paymentError: String?
-    @State private var selectedPlanForPayment: SubscriptionType?
     @State private var selectedCheckoutMode: StitchCheckoutMode = .recurring
+    @State private var showCommitteeContacts = false
+    @State private var selectedLegalPage: LegalPage?
 
     var body: some View {
         NavigationView {
@@ -139,6 +139,9 @@ struct SubscriptionPurchaseView: View {
             .navigationTitle("Subscription")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
+                Task {
+                    await householdViewModel.loadMySubscription()
+                }
                 weatherService.refreshWeather()
             }
             .toolbar {
@@ -146,29 +149,11 @@ struct SubscriptionPurchaseView: View {
                     Button("Close") { dismiss() }
                 }
             }
-            .sheet(isPresented: $showPaymentSheet) {
-                if let reference = paymentReference {
-                    StitchPaymentResultSheet(reference: reference) { success in
-                        if success {
-                            // Refresh subscription status
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                dismiss()
-                            }
-                        }
-                    }
-                }
+            .sheet(isPresented: $showCommitteeContacts) {
+                CommitteeContactsSheet()
             }
-            .sheet(isPresented: $showPaymentMethodSheet) {
-                if let plan = selectedPlanForPayment {
-                    StitchPaymentMethodSelectorSheet(
-                        title: "Subscription Payment",
-                        amount: plan.monthlyRate,
-                        allowsRecurringSelection: true,
-                        checkoutMode: $selectedCheckoutMode
-                    ) { method in
-                        initiatePayment(for: plan, preferredPaymentMethod: method)
-                    }
-                }
+            .sheet(item: $selectedLegalPage) { page in
+                WebsiteWebPortalView(urlString: page.url.absoluteString, title: page.title)
             }
             .alert("Payment Error", isPresented: .constant(paymentError != nil), actions: {
                 Button("OK") {
@@ -180,27 +165,31 @@ struct SubscriptionPurchaseView: View {
                     Text(error)
                 }
             })
-            .onReceive(NotificationCenter.default.publisher(for: .stitchPaymentCallbackReceived)) { notification in
-                guard let payload = notification.object as? StitchPaymentCallbackPayload else {
+            .onReceive(NotificationCenter.default.publisher(for: .paystackPaymentCallbackReceived)) { notification in
+                guard let payload = notification.object as? PaystackPaymentCallbackPayload else {
                     return
                 }
                 guard let reference = paymentReference, payload.reference == reference else {
                     return
                 }
-                showPaymentSheet = true
+                if payload.status == "success" {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        dismiss()
+                    }
+                }
             }
         }
     }
     
     // MARK: - Payment Handler
     
-    private func initiatePayment(for plan: SubscriptionType, preferredPaymentMethod: StitchPreferredPaymentMethod) {
+    private func initiatePayment(for plan: SubscriptionType, preferredPaymentMethod: StitchPreferredPaymentMethod = .card) {
         isInitiatingPayment = true
         
         Task {
             do {
                 let amount = plan.monthlyRate
-                let request = StitchPaymentRequest(
+                let request = PaystackPaymentRequest(
                     paymentType: .subscription,
                     amount: amount,
                     description: "\(plan == .household ? "Household" : "Single") Subscription - R\(Int(amount))/month",
@@ -212,12 +201,12 @@ struct SubscriptionPurchaseView: View {
                     billingStartDate: Date()
                 )
                 
-                let response = try await StitchPaymentManager.shared.initiatePayment(request: request)
+                let response = try await PaystackPaymentManager.shared.initiatePayment(request: request)
                 
                 await MainActor.run {
                     paymentReference = response.reference
                     isInitiatingPayment = false
-                    openCheckoutWithinApp(response.redirectUrl)
+                    openCheckoutWithinApp(accessCode: response.accessCode, fallbackURL: response.authorizationUrl ?? response.redirectUrl)
                 }
             } catch let error as StitchPaymentError {
                 await MainActor.run {
@@ -234,10 +223,40 @@ struct SubscriptionPurchaseView: View {
     }
 
     @MainActor
-    private func openCheckoutWithinApp(_ checkoutURL: URL) {
+    private func openCheckoutWithinApp(accessCode: String?, fallbackURL: URL?) {
+        if let accessCode = accessCode, !accessCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let didPresent = PaystackCheckoutPresentation.presentNativeCheckout(
+                accessCode: accessCode,
+                onSuccess: { reference in
+                    paymentReference = reference
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        dismiss()
+                    }
+                },
+                onCancelled: {
+                    paymentError = "Payment was cancelled."
+                    isInitiatingPayment = false
+                },
+                onError: { message in
+                    paymentError = message
+                    isInitiatingPayment = false
+                }
+            )
+
+            if didPresent {
+                return
+            }
+        }
+
+        guard let checkoutURL = fallbackURL else {
+            paymentReference = nil
+            paymentError = "Paystack checkout could not be started."
+            return
+        }
+
         guard checkoutURL.scheme?.lowercased() == "https" else {
             paymentReference = nil
-            paymentError = "Invalid checkout URL returned by Stitch."
+            paymentError = "Invalid checkout URL returned by Paystack."
             return
         }
 
@@ -254,14 +273,14 @@ struct SubscriptionPurchaseView: View {
 
         guard UIApplication.shared.canOpenURL(checkoutURL) else {
             paymentReference = nil
-            paymentError = "Unable to open Stitch checkout on this device."
+            paymentError = "Unable to open Paystack checkout on this device."
             return
         }
 
         UIApplication.shared.open(checkoutURL, options: [:]) { didOpen in
             if !didOpen {
                 paymentReference = nil
-                paymentError = "Unable to open Stitch checkout on this device."
+                paymentError = "Unable to open Paystack checkout on this device."
             }
         }
     }
@@ -299,13 +318,21 @@ struct SubscriptionPurchaseView: View {
     private func planCard(for plan: SubscriptionType) -> some View {
         PlanCard(
             plan: plan,
+            isEnabled: isPlanRelevant(plan),
             onPayTapped: {
-                selectedPlanForPayment = plan
                 selectedCheckoutMode = .recurring
-                showPaymentMethodSheet = true
+                initiatePayment(for: plan)
             },
             isLoading: isInitiatingPayment
         )
+    }
+
+    private func isPlanRelevant(_ plan: SubscriptionType) -> Bool {
+        guard let currentSubscription = householdViewModel.mySubscription else {
+            return true
+        }
+
+        return currentSubscription.isHousehold == (plan == .household)
     }
 
     // MARK: - Sections
@@ -384,14 +411,33 @@ struct SubscriptionPurchaseView: View {
 
     private var footerSection: some View {
         VStack(spacing: 10) {
-            Text("For membership setup, please contact your committee admin.")
-                .font(.footnote)
-                .foregroundColor(.secondary)
+            Button {
+                showCommitteeContacts = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.3.fill")
+                    Text("For membership setup, please contact your committee admins")
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(.blue)
                 .multilineTextAlignment(.center)
+            }
+            .buttonStyle(.plain)
 
             HStack(spacing: 16) {
-                Link("Terms of Use", destination: URL(string: "https://neighborhub.app/terms")!)
-                Link("Privacy Policy", destination: URL(string: "https://neighborhub.app/privacy")!)
+                Button {
+                    selectedLegalPage = .terms
+                } label: {
+                    Text("Terms of Use")
+                }
+
+                Button {
+                    selectedLegalPage = .privacy
+                } label: {
+                    Text("Privacy Policy")
+                }
             }
             .font(.caption2)
             .foregroundColor(.secondary)
@@ -405,6 +451,7 @@ struct SubscriptionPurchaseView: View {
 
 private struct PlanCard: View {
     let plan: SubscriptionType
+    let isEnabled: Bool
     var onPayTapped: (() -> Void)?
     var isLoading: Bool = false
 
@@ -499,6 +546,7 @@ private struct PlanCard: View {
                 .padding(.horizontal, 16)
             
             Button(action: {
+                guard isEnabled else { return }
                 onPayTapped?()
             }) {
                 HStack {
@@ -512,17 +560,267 @@ private struct PlanCard: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
-                .background(Color.blue)
-                .foregroundColor(.white)
+                .background(isEnabled ? Color.blue : Color.gray.opacity(0.45))
+                .foregroundColor(isEnabled ? .white : .secondary)
                 .cornerRadius(8)
             }
-            .disabled(isLoading)
+            .disabled(isLoading || !isEnabled)
             .padding(16)
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
+        .opacity(isEnabled ? 1 : 0.65)
+    }
+}
+
+// MARK: - Committee Contacts Sheet
+
+private struct CommitteeContactsSheet: View {
+    @StateObject private var viewModel = CommitteeContactsViewModel()
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationView {
+            Group {
+                if viewModel.isLoading {
+                    ProgressView("Loading contacts...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if viewModel.contacts.isEmpty {
+                    ContentUnavailableView(
+                        "No committee contacts found",
+                        systemImage: "person.3.fill",
+                        description: Text("Committee and admin contacts will appear here when they are available.")
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 14) {
+                            ForEach(viewModel.contacts) { contact in
+                                CommitteeContactCard(contact: contact)
+                            }
+                        }
+                        .padding()
+                    }
+                }
+            }
+            .navigationTitle("Committee Contacts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+            .task {
+                await viewModel.loadContacts()
+            }
+        }
+    }
+}
+
+private struct CommitteeContactCard: View {
+    let contact: CommitteeContact
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                Circle()
+                    .fill(contact.roleColor.opacity(0.16))
+                    .frame(width: 46, height: 46)
+                    .overlay(
+                        Image(systemName: contact.roleIcon)
+                            .foregroundColor(contact.roleColor)
+                            .font(.headline)
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(contact.name)
+                        .font(.headline)
+                    HStack(spacing: 6) {
+                        Text(contact.roleLabel)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(contact.roleColor.opacity(0.14))
+                            .foregroundColor(contact.roleColor)
+                            .clipShape(Capsule())
+
+                        if contact.isPrimaryContact {
+                            Text("Primary")
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.orange.opacity(0.14))
+                                .foregroundColor(.orange)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+
+            if !contact.phoneNumber.isEmpty {
+                Text(contact.phoneNumber)
+                    .font(.body.monospacedDigit())
+                    .foregroundColor(.primary)
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    openCall(contact.phoneNumber)
+                } label: {
+                    Label("Call", systemImage: "phone.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(CommitteeActionButtonStyle(color: .blue))
+
+                Button {
+                    openWhatsApp(contact.phoneNumber)
+                } label: {
+                    Label("WhatsApp", systemImage: "message.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(CommitteeActionButtonStyle(color: Color.green))
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+        )
+    }
+
+    private func openCall(_ phoneNumber: String) {
+        let cleaned = phoneNumber.filter { $0.isNumber || $0 == "+" }
+        guard let url = URL(string: "tel://\(cleaned)") else { return }
+        openURL(url)
+    }
+
+    private func openWhatsApp(_ phoneNumber: String) {
+        var waNumber = phoneNumber.filter { $0.isNumber }
+        if waNumber.hasPrefix("0") && waNumber.count == 10 {
+            waNumber = "27" + waNumber.dropFirst()
+        }
+        guard !waNumber.isEmpty, let url = URL(string: "https://wa.me/\(waNumber)") else { return }
+        openURL(url)
+    }
+}
+
+private struct CommitteeActionButtonStyle: ButtonStyle {
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline.weight(.semibold))
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .foregroundColor(.white)
+            .background(color.opacity(configuration.isPressed ? 0.75 : 1.0))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private enum LegalPage: Identifiable {
+    case terms
+    case privacy
+
+    var id: String {
+        switch self {
+        case .terms: return "terms"
+        case .privacy: return "privacy"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .terms: return "Terms of Use"
+        case .privacy: return "Privacy Policy"
+        }
+    }
+
+    var url: URL {
+        switch self {
+        case .terms:
+            return URL(string: "https://mikeweston77.github.io/neighborhub-legal/terms.html")!
+        case .privacy:
+            return URL(string: "https://mikeweston77.github.io/neighborhub-legal/privacy.html")!
+        }
+    }
+}
+
+private struct CommitteeContact: Identifiable {
+    let id: String
+    let name: String
+    let phoneNumber: String
+    let roleLabel: String
+    let roleIcon: String
+    let roleColor: Color
+    let isPrimaryContact: Bool
+}
+
+@MainActor
+private final class CommitteeContactsViewModel: ObservableObject {
+    @Published var contacts: [CommitteeContact] = []
+    @Published var isLoading = false
+
+    #if canImport(FirebaseFirestore)
+    private let db = Firestore.firestore()
+    #endif
+
+    func loadContacts() async {
+        guard contacts.isEmpty else { return }
+        isLoading = true
+        defer { isLoading = false }
+
+        #if canImport(FirebaseFirestore)
+        do {
+            let snapshot = try await db.collection("users").getDocuments()
+            let loaded = snapshot.documents.compactMap { document -> CommitteeContact? in
+                let data = document.data()
+                let isAdmin = data["isAdmin"] as? Bool ?? false
+                let isCommittee = data["isCommittee"] as? Bool ?? false
+                guard isAdmin || isCommittee else { return nil }
+
+                let firstName = (data["firstName"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let lastName = (data["lastName"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let combinedName = (data["name"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let fallbackName = document.documentID
+                let primaryName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespacesAndNewlines)
+                let name = !primaryName.isEmpty ? primaryName : (!combinedName.isEmpty ? combinedName : fallbackName)
+                let phone = (data["phone"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let roleLabel = isAdmin && isCommittee ? "Admin / Committee" : isAdmin ? "Admin" : "Committee"
+                let roleIcon = isAdmin && isCommittee ? "person.2.fill" : isAdmin ? "shield.lefthalf.filled" : "person.3.fill"
+                let roleColor: Color = isAdmin && isCommittee ? .purple : isAdmin ? .red : .blue
+
+                return CommitteeContact(
+                    id: document.documentID,
+                    name: name,
+                    phoneNumber: phone,
+                    roleLabel: roleLabel,
+                    roleIcon: roleIcon,
+                    roleColor: roleColor,
+                    isPrimaryContact: isAdmin && isCommittee
+                )
+            }
+
+            contacts = loaded.sorted { lhs, rhs in
+                if lhs.roleLabel != rhs.roleLabel { return lhs.roleLabel < rhs.roleLabel }
+                return lhs.name < rhs.name
+            }
+        } catch {
+            contacts = []
+        }
+        #endif
     }
 }
 
