@@ -16,8 +16,23 @@
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.neighborhub.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>neighborhub</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -51,10 +66,14 @@
 	<string>NeighborHub needs access to save photos and images shared in the community to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>NeighborHub needs access to your photo library to allow you to select photos for marketplace listings, community posts, and profile pictures.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>NeighborHub uses speech recognition to convert patrol push-to-talk audio into text transcripts for team coordination and incident history.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>NeighborHub uses notifications to alert you when a neighbor requests assistance, reports an issue, creates a new event, lists a marketplace item, or sends a new chat message, as well as for important community updates.</string>
 	<key>NSWeatherUsageDescription</key>
 	<string>NeighborHub needs access to weather data to display current weather conditions and forecasts for your neighborhood.</string>
+	<key>PAYSTACK_PUBLIC_KEY</key>
+	<string>pk_test_ac48c9308d56e3b0c9dc469de7fabc23d3ff32f0</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -72,6 +91,11 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>location</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiredDeviceCapabilities</key>
