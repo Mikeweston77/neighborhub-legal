@@ -20,46 +20,15 @@ enum PaystackCheckoutPresentation {
         onCancelled: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) -> Bool {
-        guard let paystack = makePaystack() else {
+        // Paystack's native charge UI uses dynamic colors that become
+        // invisible in dark mode. We always use SFSafariViewController
+        // instead, which properly supports both light and dark appearance.
+        let checkoutURLString = "https://checkout.paystack.com/\(accessCode)"
+        guard let checkoutURL = URL(string: checkoutURLString) else {
+            onError("Invalid Paystack checkout URL.")
             return false
         }
-
-        guard let presenter = topMostViewController() else {
-            onError("Unable to present Paystack checkout on this device.")
-            return false
-        }
-
-        // Force light mode on the presenter for Paystack's native UI,
-        // which is designed for light appearance. Without this, text
-        // may be invisible in dark mode.
-        presenter.overrideUserInterfaceStyle = .light
-        paystack.presentChargeUI(on: presenter, accessCode: accessCode) { result in
-            switch result {
-            case .completed(let details):
-                let reference = details.reference.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !reference.isEmpty {
-                    NotificationCenter.default.post(
-                        name: .paystackPaymentCallbackReceived,
-                        object: PaystackPaymentCallbackPayload(
-                            status: "success",
-                            reference: reference,
-                            trusted: "1",
-                            error: nil
-                        )
-                    )
-                    onSuccess(reference)
-                } else {
-                    onError("Paystack completed without a transaction reference.")
-                }
-            case .cancelled:
-                onCancelled()
-            case .error(error: let error, reference: let reference):
-                let referenceText = reference?.trimmingCharacters(in: .whitespacesAndNewlines)
-                let suffix = referenceText?.isEmpty == false ? " (reference: \(referenceText!))" : ""
-                onError("\(error.message)\(suffix)")
-            }
-        }
-
+        presentCheckout(checkoutURL, onResetReference: { }, onError: onError)
         return true
     }
 
