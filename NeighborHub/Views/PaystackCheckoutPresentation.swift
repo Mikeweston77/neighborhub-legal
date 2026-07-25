@@ -29,6 +29,10 @@ enum PaystackCheckoutPresentation {
             return false
         }
 
+        // Force light mode on the presenter for Paystack's native UI,
+        // which is designed for light appearance. Without this, text
+        // may be invisible in dark mode.
+        presenter.overrideUserInterfaceStyle = .light
         paystack.presentChargeUI(on: presenter, accessCode: accessCode) { result in
             switch result {
             case .completed(let details):
