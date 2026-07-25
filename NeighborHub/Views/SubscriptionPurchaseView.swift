@@ -18,6 +18,7 @@ struct StitchPaymentMethodSelectorSheet: View {
     let onSelect: (StitchPreferredPaymentMethod) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     
     private var availablePaymentMethods: [StitchPreferredPaymentMethod] {
         StitchPreferredPaymentMethod.allCases.filter { method in
@@ -30,6 +31,7 @@ struct StitchPaymentMethodSelectorSheet: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text(String(format: "Amount: R%.2f", amount))
                     .font(.headline)
+                    .foregroundColor(.primary)
 
                 if allowsRecurringSelection {
                     VStack(alignment: .leading, spacing: 8) {
@@ -84,8 +86,10 @@ struct StitchPaymentMethodSelectorSheet: View {
                                 .foregroundColor(.secondary)
                         }
                         .padding(12)
-                        .background(Color(.secondarySystemGroupedBackground))
-                        .cornerRadius(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color(.secondarySystemGroupedBackground))
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -93,6 +97,8 @@ struct StitchPaymentMethodSelectorSheet: View {
                 Spacer()
             }
             .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.systemGroupedBackground))
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -103,6 +109,7 @@ struct StitchPaymentMethodSelectorSheet: View {
                 }
             }
         }
+        .navigationViewStyle(.stack)
     }
 }
 
