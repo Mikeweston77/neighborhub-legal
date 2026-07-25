@@ -376,6 +376,16 @@ struct SubscriptionPurchaseView: View {
                 .padding(.top, 4)
             }
             .padding(.vertical, 32)
+
+            VStack {
+                Spacer()
+                HStack {
+                    HomeView.WeatherKitAttributionView()
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 12)
+                    Spacer()
+                }
+            }
         }
     }
 
@@ -410,7 +420,28 @@ struct SubscriptionPurchaseView: View {
     }
 
     private var footerSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 14) {
+            // MARK: - Auto-Renewable Subscription Disclosure
+            VStack(spacing: 10) {
+                Text("Subscription Details")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.primary)
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    subscriptionDisclosureRow("Type:", "Auto-renewable monthly subscription")
+                    subscriptionDisclosureRow("Duration:", "1 month per billing cycle")
+                    subscriptionDisclosureRow("Price:", "R50/month (Single) or R99/month (Household)")
+                    subscriptionDisclosureRow("Renewal:", "Automatically renews each month until cancelled")
+                    subscriptionDisclosureRow("Manage:", "Contact your committee admin to cancel")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.tertiarySystemFill))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+
             Button {
                 showCommitteeContacts = true
             } label: {
@@ -430,7 +461,7 @@ struct SubscriptionPurchaseView: View {
                 Button {
                     selectedLegalPage = .terms
                 } label: {
-                    Text("Terms of Use")
+                    Text("Terms of Use (EULA)")
                 }
 
                 Button {
@@ -439,10 +470,22 @@ struct SubscriptionPurchaseView: View {
                     Text("Privacy Policy")
                 }
             }
-            .font(.caption2)
-            .foregroundColor(.secondary)
+            .font(.caption.weight(.semibold))
+            .foregroundColor(.blue)
+            .padding(.top, 4)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func subscriptionDisclosureRow(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 4) {
+            Text(label)
+                .fontWeight(.medium)
+                .frame(width: 64, alignment: .trailing)
+            Text(value)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+        }
     }
 
 }
