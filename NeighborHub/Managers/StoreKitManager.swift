@@ -5,8 +5,8 @@ import Combine
 // MARK: - Product IDs
 
 enum NeighborHubProduct: String, CaseIterable {
-    case singleMonthly    = "com.ml5ar66rq7.neighborhubwf3.subscription.single.monthly"
-    case householdMonthly = "com.ml5ar66rq7.neighborhubwf3.subscription.household.monthly"
+    case singleMonthly    = "com.ml5ar66rq7.neighborhubwf3.sub.single.monthly.v2"
+    case householdMonthly = "com.ml5ar66rq7.neighborhubwf3.sub.household.monthly.v2"
 
     var displayName: String {
         switch self {
