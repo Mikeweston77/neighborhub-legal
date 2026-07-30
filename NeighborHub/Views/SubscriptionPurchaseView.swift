@@ -170,19 +170,6 @@ struct SubscriptionPurchaseView: View {
                     Text(error)
                 }
             })
-            .onReceive(NotificationCenter.default.publisher(for: .paystackPaymentCallbackReceived)) { notification in
-                guard let payload = notification.object as? PaystackPaymentCallbackPayload else {
-                    return
-                }
-                guard let reference = paymentReference, payload.reference == reference else {
-                    return
-                }
-                if payload.status == "success" {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        dismiss()
-                    }
-                }
-            }
         }
     }
     
@@ -210,97 +197,6 @@ struct SubscriptionPurchaseView: View {
             await StoreKitManager.shared.purchase(product)
             await MainActor.run {
                 isInitiatingPayment = false
-            }
-        }
-    }
-
-    @MainActor
-    private func openCheckoutWithinApp(accessCode: String?, fallbackURL: URL?) {
-        if let accessCode = accessCode, !accessCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let didPresent = PaystackCheckoutPresentation.presentNativeCheckout(
-                accessCode: accessCode,
-                onSuccess: { reference in
-                    paymentReference = reference
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        dismiss()
-                    }
-                },
-                onCancelled: {
-                    paymentError = "Payment was cancelled."
-                    isInitiatingPayment = false
-                },
-                onError: { message in
-                    paymentError = message
-                    isInitiatingPayment = false
-                }
-            )
-
-            if didPresent {
-                return
-            }
-        }
-
-        guard let checkoutURL = fallbackURL else {
-            paymentReference = nil
-            paymentError = "Paystack checkout could not be started."
-            return
-        }
-
-        guard checkoutURL.scheme?.lowercased() == "https" else {
-            paymentReference = nil
-            paymentError = "Invalid checkout URL returned by Paystack."
-            return
-        }
-
-        #if canImport(UIKit)
-        let safariVC = SFSafariViewController(url: checkoutURL)
-        safariVC.dismissButtonStyle = .close
-        safariVC.preferredControlTintColor = .systemBlue
-
-        if let presenter = topMostViewController() {
-            presenter.present(safariVC, animated: true)
-            return
-        }
-        #endif
-
-        guard UIApplication.shared.canOpenURL(checkoutURL) else {
-            paymentReference = nil
-            paymentError = "Unable to open Paystack checkout on this device."
-            return
-        }
-
-        UIApplication.shared.open(checkoutURL, options: [:]) { didOpen in
-            if !didOpen {
-                paymentReference = nil
-                paymentError = "Unable to open Paystack checkout on this device."
-            }
-        }
-    }
-
-    #if canImport(UIKit)
-    private func topMostViewController() -> UIViewController? {
-        guard let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first,
-              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
-                ?? scene.windows.first?.rootViewController
-        else {
-            return nil
-        }
-
-        var current = root
-        while let presented = current.presentedViewController {
-            current = presented
-        }
-        return current
-    }
-    #endif
-    
-    private func handlePaymentCompletion(success: Bool) {
-        if success {
-            // Give a moment for subscription status to update
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                dismiss()
             }
         }
     }
