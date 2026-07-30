@@ -118,10 +118,8 @@ struct SubscriptionPurchaseView: View {
     @StateObject private var householdViewModel = UserHouseholdViewModel()
     @StateObject private var weatherService = WeatherKitService()
     
-    @State private var paymentReference: String?
     @State private var isInitiatingPayment: Bool = false
     @State private var paymentError: String?
-    @State private var selectedCheckoutMode: StitchCheckoutMode = .recurring
     @State private var showCommitteeContacts = false
     @State private var selectedLegalPage: LegalPage?
 
@@ -190,41 +188,28 @@ struct SubscriptionPurchaseView: View {
     
     // MARK: - Payment Handler
     
-    private func initiatePayment(for plan: SubscriptionType, preferredPaymentMethod: StitchPreferredPaymentMethod = .card) {
+    private func storeKitProduct(for plan: SubscriptionType) -> NeighborHubProduct? {
+        switch plan {
+        case .single: return .singleMonthly
+        case .household: return .householdMonthly
+        }
+    }
+    
+    private func initiatePayment(for plan: SubscriptionType) {
         isInitiatingPayment = true
         
+        // Use StoreKit for subscription purchases (Apple IAP requirement)
+        guard let productKind = storeKitProduct(for: plan),
+              let product = StoreKitManager.shared.product(for: productKind) else {
+            paymentError = "Subscription product not available. Please try again later."
+            isInitiatingPayment = false
+            return
+        }
+        
         Task {
-            do {
-                let amount = plan.monthlyRate
-                let request = PaystackPaymentRequest(
-                    paymentType: .subscription,
-                    amount: amount,
-                    description: "\(plan == .household ? "Household" : "Single") Subscription - R\(Int(amount))/month",
-                    planType: plan == .household ? .household : .single,
-                    billingDay: Calendar.current.component(.day, from: Date()),
-                    autoPayEnabled: selectedCheckoutMode.autoPayEnabled,
-                    checkoutMode: selectedCheckoutMode,
-                    preferredPaymentMethod: preferredPaymentMethod,
-                    billingStartDate: Date()
-                )
-                
-                let response = try await PaystackPaymentManager.shared.initiatePayment(request: request)
-                
-                await MainActor.run {
-                    paymentReference = response.reference
-                    isInitiatingPayment = false
-                    openCheckoutWithinApp(accessCode: response.accessCode, fallbackURL: response.authorizationUrl ?? response.redirectUrl)
-                }
-            } catch let error as StitchPaymentError {
-                await MainActor.run {
-                    paymentError = error.errorDescription ?? "Payment failed"
-                    isInitiatingPayment = false
-                }
-            } catch {
-                await MainActor.run {
-                    paymentError = error.localizedDescription
-                    isInitiatingPayment = false
-                }
+            await StoreKitManager.shared.purchase(product)
+            await MainActor.run {
+                isInitiatingPayment = false
             }
         }
     }
@@ -327,7 +312,6 @@ struct SubscriptionPurchaseView: View {
             plan: plan,
             isEnabled: isPlanRelevant(plan),
             onPayTapped: {
-                selectedCheckoutMode = .recurring
                 initiatePayment(for: plan)
             },
             isLoading: isInitiatingPayment

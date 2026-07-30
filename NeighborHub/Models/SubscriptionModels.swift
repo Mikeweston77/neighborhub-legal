@@ -100,8 +100,8 @@ struct MemberSubscription: Identifiable, Codable, Equatable, Hashable {
         if let type = subscriptionType {
             return type
         }
-        // Auto-detect: if household members exist, it's household
-        if let members = householdMembers, members.count > 1 {
+        // Auto-detect: any additional household member means household pricing.
+        if let members = householdMembers, !members.isEmpty {
             return .household
         }
         return .single
