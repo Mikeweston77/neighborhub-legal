@@ -89,7 +89,7 @@ enum PaystackCheckoutPresentation {
     }
 
     #if canImport(UIKit)
-    private static func topMostViewController() -> UIViewController? {
+    static func topMostViewController() -> UIViewController? {
         guard let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .first,
