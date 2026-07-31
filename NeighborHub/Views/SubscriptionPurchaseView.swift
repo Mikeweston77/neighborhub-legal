@@ -270,7 +270,7 @@ struct SubscriptionPurchaseView: View {
         safariVC.dismissButtonStyle = .close
         safariVC.preferredControlTintColor = .systemBlue
 
-        if let presenter = topMostViewController() {
+        if let presenter = PaystackCheckoutPresentation.topMostViewController() {
             presenter.present(safariVC, animated: true)
             return
         }
