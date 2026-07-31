@@ -185,98 +185,21 @@ struct SubscriptionPurchaseView: View {
     private func initiatePayment(for plan: SubscriptionType) {
         isInitiatingPayment = true
         
-        // Try StoreKit first (Apple IAP). If products aren't configured in
-        // App Store Connect yet, fall back to Paystack so the flow still works.
-        if let productKind = storeKitProduct(for: plan),
-           let product = StoreKitManager.shared.product(for: productKind) {
-            Task {
-                await StoreKitManager.shared.purchase(product)
-                await MainActor.run {
-                    isInitiatingPayment = false
-                }
-            }
+        // Apple requires all digital subscriptions to use StoreKit/IAP.
+        // No third-party payment processors are allowed (Guideline 3.1.1).
+        guard let productKind = storeKitProduct(for: plan),
+              let product = StoreKitManager.shared.product(for: productKind) else {
+            paymentError = "Subscription not available. Please ensure the subscription is configured in App Store Connect."
+            isInitiatingPayment = false
             return
         }
         
-        // Fallback: Paystack web checkout
         Task {
-            do {
-                let amount = plan.monthlyRate
-                let request = PaystackPaymentRequest(
-                    paymentType: .subscription,
-                    amount: amount,
-                    description: "\(plan == .household ? "Household" : "Single") Subscription - R\(Int(amount))/month",
-                    planType: plan == .household ? .household : .single,
-                    billingDay: Calendar.current.component(.day, from: Date()),
-                    autoPayEnabled: true,
-                    checkoutMode: .recurring,
-                    preferredPaymentMethod: .card,
-                    billingStartDate: Date()
-                )
-                
-                let response = try await PaystackPaymentManager.shared.initiatePayment(request: request)
-                
-                await MainActor.run {
-                    isInitiatingPayment = false
-                    presentPaystackCheckout(accessCode: response.accessCode, fallbackURL: response.authorizationUrl ?? response.redirectUrl)
-                }
-            } catch let error as StitchPaymentError {
-                await MainActor.run {
-                    paymentError = error.errorDescription ?? "Payment failed"
-                    isInitiatingPayment = false
-                }
-            } catch {
-                await MainActor.run {
-                    paymentError = error.localizedDescription
-                    isInitiatingPayment = false
-                }
+            await StoreKitManager.shared.purchase(product)
+            await MainActor.run {
+                isInitiatingPayment = false
             }
         }
-    }
-    
-    private func presentPaystackCheckout(accessCode: String?, fallbackURL: URL?) {
-        if let accessCode = accessCode, !accessCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let didPresent = PaystackCheckoutPresentation.presentNativeCheckout(
-                accessCode: accessCode,
-                onSuccess: { _ in
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        dismiss()
-                    }
-                },
-                onCancelled: {
-                    paymentError = "Payment was cancelled."
-                },
-                onError: { message in
-                    paymentError = message
-                }
-            )
-            if didPresent {
-                return
-            }
-        }
-
-        guard let checkoutURL = fallbackURL else {
-            paymentError = "Paystack checkout could not be started."
-            return
-        }
-
-        guard checkoutURL.scheme?.lowercased() == "https" else {
-            paymentError = "Invalid checkout URL returned by Paystack."
-            return
-        }
-
-        #if canImport(UIKit)
-        let safariVC = SFSafariViewController(url: checkoutURL)
-        safariVC.dismissButtonStyle = .close
-        safariVC.preferredControlTintColor = .systemBlue
-
-        if let presenter = PaystackCheckoutPresentation.topMostViewController() {
-            presenter.present(safariVC, animated: true)
-            return
-        }
-        #endif
-
-        paymentError = "Unable to open Paystack checkout on this device."
     }
     
     // MARK: - Sub-views
